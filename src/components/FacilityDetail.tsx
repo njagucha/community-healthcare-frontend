@@ -1,19 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import useSWR from "swr";
 
 // MUI Imports
 import {
-  TextField,
   Grid,
   Typography,
   CircularProgress,
-  IconButton,
-  Card,
-  CardMedia,
-  CardContent,
-  CardActions,
   Breadcrumbs,
   Link,
 } from "@mui/material";
@@ -23,7 +17,7 @@ import ArrowCircleRightIcon from "@mui/icons-material/ArrowCircleRight";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 
 // Fetcher function for SWR
-const fetcher = (url) => axios.get(url).then((res) => res.data);
+const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 const FacilityDetail = () => {
   const navigate = useNavigate();
@@ -31,10 +25,9 @@ const FacilityDetail = () => {
 
   // fetching the health facilities detail
   const { data: healthFacility, error: healthFacilityError } = useSWR(
-    `http://127.0.0.1:8000/api/facilities/${params.id}`,
+    `https://community-healthcare-backend.onrender.com/api/facilities/${params.id}`,
     fetcher
   );
-  console.log(healthFacility);
   // state for image slider
   const [currentPicture, setCurrentPicture] = useState(0);
   // Define the event handlers for the pictures

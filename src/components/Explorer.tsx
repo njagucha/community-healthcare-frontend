@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import useSWR from "swr";
 import { useNavigate } from "react-router-dom";
@@ -15,7 +15,7 @@ import {
   Popup,
   useMap,
 } from "react-leaflet";
-import * as L from "leaflet";
+import L, { Map } from "leaflet";
 
 // MUI imports
 import {
@@ -29,31 +29,44 @@ import {
   CardContent,
   CircularProgress,
   IconButton,
-  CardActions,
 } from "@mui/material";
 import RoomIcon from "@mui/icons-material/Room";
 
 // types
 import { baseMaps } from "../types";
+interface HealthFacility {
+  id: number;
+  name_of_health_facility: string;
+  latitude: number;
+  longitude: number;
+  picture1: string;
+  level: string;
+}
+
+interface SubCountyBnd {
+  id: number;
+  geom: GeoJSON.FeatureCollection<GeoJSON.Geometry>;
+}
 
 // Fetcher function for SWR
-const fetcher = (url) => axios.get(url).then((res) => res.data);
+const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 const Explorer = () => {
-  const [mapInstance, setMapInstance] = useState(null);
+  const [mapInstance, setMapInstance] = useState<Map | null>(null);
   const navigate = useNavigate();
 
   // fetching the health facilities
-  const { data: healthFacilities, error: healthFacilitiesError } = useSWR(
-    "http://127.0.0.1:8000/api/facilities/",
+  const { data: healthFacilities, error: healthFacilitiesError } = useSWR<
+    HealthFacility[]
+  >(
+    "https://community-healthcare-backend.onrender.com/api/facilities/",
     fetcher
   );
 
   // fetching the sub county boundary
-  const { data: subCountyBnd, error: subCountyBndError } = useSWR(
-    "http://127.0.0.1:8000/api/bnd/",
-    fetcher
-  );
+  const { data: subCountyBnd, error: subCountyBndError } = useSWR<
+    SubCountyBnd[]
+  >("https://community-healthcare-backend.onrender.com/api/bnd/", fetcher);
 
   // check if there any errors when fetching
   if (healthFacilitiesError || subCountyBndError) {
@@ -104,7 +117,11 @@ const Explorer = () => {
   ];
 
   // fit initial map load to the subcounty
-  const FitBoundsToGeoJSON = ({ data }: any) => {
+  const FitBoundsToGeoJSON = ({
+    data,
+  }: {
+    data: GeoJSON.FeatureCollection<GeoJSON.Geometry>;
+  }) => {
     const map = useMap();
 
     useEffect(() => {
@@ -157,12 +174,14 @@ const Explorer = () => {
                 action={
                   <IconButton
                     aria-label="settings"
-                    onClick={() =>
-                      mapInstance.flyTo(
-                        [healthFacility.latitude, healthFacility.longitude],
-                        16
-                      )
-                    }
+                    onClick={() => {
+                      if (mapInstance) {
+                        mapInstance.flyTo(
+                          [healthFacility.latitude, healthFacility.longitude],
+                          16
+                        );
+                      }
+                    }}
                   >
                     <RoomIcon />
                   </IconButton>

@@ -1,5 +1,3 @@
-import React from "react";
-
 // Assets
 import community from "../assets/community.jpg";
 import { Typography } from "@mui/material";
