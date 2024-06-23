@@ -45,3 +45,19 @@
   line-height: 18px;
   color: #555;
 }
+.info.legend h4 {
+  margin: 0 0 5px;
+  padding: 0;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+.legend-item span {
+  margin-right: 5px;
+}
+.legend-item img {
+  width: 20px; /* Adjust the size as needed */
+  height: auto;
+}

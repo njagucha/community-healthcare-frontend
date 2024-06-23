@@ -3,6 +3,10 @@ import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import useSWR from "swr";
 
+// react-leaflet imports
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { Icon } from "leaflet";
+
 // MUI Imports
 import {
   Grid,
@@ -15,6 +19,29 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import ArrowCircleLeftIcon from "@mui/icons-material/ArrowCircleLeft";
 import ArrowCircleRightIcon from "@mui/icons-material/ArrowCircleRight";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
+
+// icons-png
+import assortmentPng from "../assets/map-icons/assortment.png";
+import busStopPng from "../assets/map-icons/busstop.png";
+import communityServicePng from "../assets/map-icons/community-service.png";
+import schoolPng from "../assets/map-icons/school.png";
+import stadiumPng from "../assets/map-icons/stadium.png";
+import townHousePng from "../assets/map-icons/townhouse.png";
+
+// types
+interface PointField {
+  type: "Point";
+  coordinates: [number, number];
+}
+
+interface Landmark {
+  id: number;
+  name: string;
+  lon: number;
+  lat: number;
+  type: string;
+  geom: PointField;
+}
 
 // Fetcher function for SWR
 const fetcher = (url: string) => axios.get(url).then((res) => res.data);
@@ -84,6 +111,28 @@ const FacilityDetail = () => {
     healthFacility.picture4,
     healthFacility.picture5,
   ].filter((picture) => picture !== null);
+
+  // custom icons
+  const assormentIcon = new Icon({
+    iconUrl: assortmentPng,
+    iconSize: [40, 40],
+  });
+  const busStopIcon = new Icon({
+    iconUrl: busStopPng,
+    iconSize: [40, 40],
+  });
+  const schoolIcon = new Icon({
+    iconUrl: schoolPng,
+    iconSize: [40, 40],
+  });
+  const stadiumIcon = new Icon({
+    iconUrl: stadiumPng,
+    iconSize: [40, 40],
+  });
+  const townHouseIcon = new Icon({
+    iconUrl: townHousePng,
+    iconSize: [40, 40],
+  });
 
   return (
     <div
@@ -229,7 +278,7 @@ const FacilityDetail = () => {
           }}
         >
           <Grid item xs={7} style={{ display: "flex" }}>
-            <CheckBoxIcon style={{ color: "green", fontSize: "2rem" }} />
+            <img src={communityServicePng} alt="Community Service" />
             <Typography variant="h6">
               This facility conducts community healthcare programs
             </Typography>
@@ -300,6 +349,103 @@ const FacilityDetail = () => {
         ) : (
           ""
         )}
+      </Grid>
+      {/* MapContainer */}
+      <Grid
+        item
+        container
+        style={{ height: "35rem", marginTop: "1rem" }}
+        spacing={2}
+        justifyContent="space-between"
+      >
+        <Grid item xs={3} style={{ overflow: "auto", height: "35rem" }}>
+          {healthFacility.landmarks_within_500M.map((landmark: Landmark) => {
+            const degreeToRadian = (coordinate: number) => {
+              return coordinate * (Math.PI / 180);
+            };
+            const calculateDistance = () => {
+              // coordinates of listing
+              const latitude1 = degreeToRadian(healthFacility.latitude);
+              const longitude1 = degreeToRadian(healthFacility.longitude);
+
+              // coordinates of POI
+              const latitude2 = degreeToRadian(landmark.geom.coordinates[1]);
+              const longitude2 = degreeToRadian(landmark.geom.coordinates[0]);
+
+              // The formula to calculate dist in km
+              const latDiff = latitude2 - latitude1;
+              const lonDiff = longitude2 - longitude1;
+              const R = 6378; //radius of earth in km
+
+              const a =
+                Math.sin(latDiff / 2) * Math.sin(latDiff / 2) +
+                Math.cos(latitude1) *
+                  Math.cos(latitude2) *
+                  Math.sin(lonDiff / 2) *
+                  Math.sin(lonDiff / 2);
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+              const dist = R * c;
+              return dist.toFixed(2);
+            };
+            return (
+              <div
+                key={landmark.id}
+                style={{ marginBottom: "0.5rem", border: "1px solid #000" }}
+              >
+                <Typography variant="h6">{landmark.name}</Typography>
+                <Typography variant="subtitle1">
+                  {landmark.type} |
+                  <span style={{ fontWeight: "bolder", color: "green" }}>
+                    {calculateDistance()} Kilometres
+                  </span>
+                </Typography>
+              </div>
+            );
+          })}
+        </Grid>
+        <Grid item xs={9}>
+          <MapContainer
+            center={[healthFacility.latitude, healthFacility.longitude]}
+            zoom={13}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker
+              position={[healthFacility.latitude, healthFacility.longitude]}
+            >
+              <Popup>{healthFacility.name_of_health_facility}</Popup>
+            </Marker>
+            {healthFacility.landmarks_within_500M.map((landmark: Landmark) => {
+              const landmarkIconDisplay = () => {
+                if (landmark.type === "Social") {
+                  return assormentIcon;
+                } else if (landmark.type === "Transport") {
+                  return busStopIcon;
+                } else if (landmark.type === "Education") {
+                  return schoolIcon;
+                } else if (landmark.type === "Recreational") {
+                  return stadiumIcon;
+                } else if (landmark.type === "Commercial") {
+                  return townHouseIcon;
+                }
+              };
+              return (
+                <Marker
+                  key={landmark.id}
+                  position={[
+                    landmark.geom.coordinates[1],
+                    landmark.geom.coordinates[0],
+                  ]}
+                  icon={landmarkIconDisplay()}
+                >
+                  <Popup>{landmark.name}</Popup>
+                </Marker>
+              );
+            })}
+          </MapContainer>
+        </Grid>
       </Grid>
     </div>
   );

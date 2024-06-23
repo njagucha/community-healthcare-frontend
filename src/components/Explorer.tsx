@@ -15,7 +15,7 @@ import {
   Popup,
   useMap,
 } from "react-leaflet";
-import L, { Map } from "leaflet";
+import L, { Map, Icon } from "leaflet";
 
 // MUI imports
 import {
@@ -40,13 +40,19 @@ interface HealthFacility {
   latitude: number;
   longitude: number;
   picture1: string;
-  level: string;
+  level: number;
 }
 
 interface SubCountyBnd {
   id: number;
   geom: GeoJSON.FeatureCollection<GeoJSON.Geometry>;
 }
+
+// icons-png
+import level2Png from "../assets/map-icons/level_2.png";
+import level3Png from "../assets/map-icons/level_3.png";
+import level4Png from "../assets/map-icons/level_4.png";
+import level5Png from "../assets/map-icons/level_5.png";
 
 // Fetcher function for SWR
 const fetcher = (url: string) => axios.get(url).then((res) => res.data);
@@ -142,6 +148,24 @@ const Explorer = () => {
     return null;
   };
 
+  // custom icons
+  const level2Icon = new Icon({
+    iconUrl: level2Png,
+    iconSize: [40, 40],
+  });
+  const level3Icon = new Icon({
+    iconUrl: level3Png,
+    iconSize: [40, 40],
+  });
+  const level4Icon = new Icon({
+    iconUrl: level4Png,
+    iconSize: [40, 40],
+  });
+  const level5Icon = new Icon({
+    iconUrl: level5Png,
+    iconSize: [40, 40],
+  });
+
   return (
     <Grid container>
       <Grid
@@ -235,6 +259,17 @@ const Explorer = () => {
                 <LayersControl.Overlay checked name="Health Facilities">
                   <FeatureGroup>
                     {healthFacilities.map((healthFacility) => {
+                      const iconDisplay = () => {
+                        if (healthFacility.level === 2) {
+                          return level2Icon;
+                        } else if (healthFacility.level === 3) {
+                          return level3Icon;
+                        } else if (healthFacility.level === 4) {
+                          return level4Icon;
+                        } else if (healthFacility.level === 5) {
+                          return level5Icon;
+                        }
+                      };
                       return (
                         <Marker
                           key={healthFacility.id}
@@ -242,6 +277,7 @@ const Explorer = () => {
                             healthFacility.latitude,
                             healthFacility.longitude,
                           ]}
+                          icon={iconDisplay()}
                         >
                           <Popup>
                             <Typography variant="h6">
